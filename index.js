@@ -15,7 +15,7 @@ const db = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/sql_teac
 
 const app = express();
 const user = User(db);
-const userProgess = UserProgress(db);
+const userProgress = UserProgress(db);
 
 passport.serializeUser(function (user, done) {
     done(null, user);
@@ -59,18 +59,19 @@ passport.use(new GitHubStrategy({
 
             try {
                 let exist = await user.exist(profile.username);
+
                 if (!exist) {
-                    await user.createUser(profile.username);
+                    await user.createUser({
+                        username: profile.username,
+                        fullName: profile.displayName
+                    });
                 }
                 const currentUser = await user.findByUsername(profile.username);
                 return done(null, currentUser);
             }
             catch (err) {
                 done(err);
-            }
-
-            // console.log(profile);
-            
+            }            
         });
     }
 ));
@@ -101,19 +102,20 @@ app.get('/auth/github/callback',
 
 app.get('/logout', function (req, res) {
     req.logout();
-    res.redirect('/');
+    res.redirect('/login');
 });
 
 app.get('/', function (req, res) {
-    res.render('home', { user: req.user });
+    res.redirect('/login');
 });
 
 app.get('/learn', ensureAuthenticated, function (req, res) {
     res.render('learn', { layout: false });
 });
 
-app.get('/progress', [ensureAuthenticated, ensureAdmin], function(req, res){
-    res.render('progress')
+app.get('/progress', [ensureAuthenticated, ensureAdmin], async function(req, res){
+    const progressList = await userProgress.overview();
+    res.render('progress', {progressList});
 });
 
 app.post('/api/track-progress', async function (req, res) {
@@ -133,12 +135,7 @@ app.post('/api/track-progress', async function (req, res) {
             task_name
         };
 
-        // const result = await db.one('select count(*) from user_progress where user_name = ${user_name} and task_name = ${task_name}', params);
-        // if (Number(result.count) === 0) {
-        //     await db.none('insert into user_progress (user_name, task_name) values (${user_name}, ${task_name})', params);
-        // }
-
-        await userProgess.record(params);
+        await userProgress.record(params);
 
         return res.json({
             status: 'success'

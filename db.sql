@@ -1,5 +1,6 @@
 create table the_user(
     id serial not null primary key,
+    full_name varchar(100),
     user_name varchar(40),
     active boolean,
     admin boolean

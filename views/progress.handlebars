@@ -1,1 +1,16 @@
-<h1>Progress</h1>
+<h1>sqlteaching Progress</h1>
+
+<table>
+    <tr>
+        <th>Full name</th>
+        <th>Username</th>
+        <th>Progress</th>
+    </tr>
+    {{#each progressList}}
+    <tr>
+        <td>{{full_name}}</td>
+        <td>{{user_name}}</td>
+        <td>{{progress}}%</td>
+    </tr>
+    {{/each}}
+</table>

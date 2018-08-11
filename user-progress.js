@@ -6,8 +6,19 @@ module.exports = function(db) {
         }
     }
 
+    async function overview() {
+        const query = `select full_name, user_progress.user_name, 
+                round(count(*)/31.00, 2)*100 as progress 
+            from 
+                user_progress join the_user on the_user.user_name = user_progress.user_name 
+            group by 
+                full_name,user_progress.user_name`;
+        return db.any(query);
+    }
+
     return {
-        record
+        record,
+        overview
     }
 
 }

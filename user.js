@@ -16,11 +16,9 @@ module.exports = function(db) {
         return user;
     }
 
-    async function createUser(username) {
-        const query = 'insert into the_user (user_name, active, admin) values (${username}, false, false)';
-        const user = await db.none(query, {
-            username
-        });
+    async function createUser(details) {
+        const query = 'insert into the_user (user_name, full_name, active, admin) values (${username}, ${fullName}, false, false)';
+        await db.none(query, details);
     }
 
     return {
