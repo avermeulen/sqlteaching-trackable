@@ -3,10 +3,19 @@ const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const passport = require('passport');
+const GitHubStrategy = require('passport-github2').Strategy;
+const pgp = require('pg-promise')({
+    // Initialization Options
+});
 
-var GitHubStrategy = require('passport-github2').Strategy;
+const User = require('./user');
+const UserProgress = require('./user-progress');
+
+const db = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/sql_teaching');
 
 const app = express();
+const user = User(db);
+const userProgess = UserProgress(db);
 
 passport.serializeUser(function (user, done) {
     done(null, user);
@@ -41,15 +50,27 @@ passport.use(new GitHubStrategy({
 },
     function (accessToken, refreshToken, profile, done) {
         // asynchronous verification, for effect...
-        process.nextTick(function () {
+        process.nextTick(async function () {
 
             // To keep the example simple, the user's GitHub profile is returned to
             // represent the logged-in user.  In a typical application, you would want
             // to associate the GitHub account with a user record in your database,
             // and return that user instead.
 
-            console.log(profile);
-            return done(null, profile);
+            try {
+                let exist = await user.exist(profile.username);
+                if (!exist) {
+                    await user.createUser(profile.username);
+                }
+                const currentUser = await user.findByUsername(profile.username);
+                return done(null, currentUser);
+            }
+            catch (err) {
+                done(err);
+            }
+
+            // console.log(profile);
+            
         });
     }
 ));
@@ -65,11 +86,6 @@ app.get('/login', function (req, res) {
     res.render('login', { user: req.user });
 });
 
-// GET /auth/github
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  The first step in GitHub authentication will involve redirecting
-//   the user to github.com.  After authorization, GitHub will redirect the user
-//   back to this application at /auth/github/callback
 app.get('/auth/github',
     passport.authenticate('github', { scope: ['user:email'] }),
     function (req, res) {
@@ -77,15 +93,10 @@ app.get('/auth/github',
         // function will not be called.
     });
 
-// GET /auth/github/callback
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  If authentication fails, the user will be redirected back to the
-//   login page.  Otherwise, the primary route function will be called,
-//   which, in this example, will redirect the user to the home page.
 app.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login' }),
     function (req, res) {
-        res.redirect('/');
+        res.redirect('/learn');
     });
 
 app.get('/logout', function (req, res) {
@@ -97,8 +108,61 @@ app.get('/', function (req, res) {
     res.render('home', { user: req.user });
 });
 
+app.get('/learn', ensureAuthenticated, function (req, res) {
+    res.render('learn', { layout: false });
+});
+
+app.get('/progress', [ensureAuthenticated, ensureAdmin], function(req, res){
+    res.render('progress')
+});
+
+app.post('/api/track-progress', async function (req, res) {
+    if (!req.isAuthenticated()) {
+        return res.json({
+            status: 'access-denied'
+        });
+    }
+
+    const task_name = req.body.task;
+    const user_name = req.user.user_name;
+
+    try {
+
+        const params = {
+            user_name,
+            task_name
+        };
+
+        // const result = await db.one('select count(*) from user_progress where user_name = ${user_name} and task_name = ${task_name}', params);
+        // if (Number(result.count) === 0) {
+        //     await db.none('insert into user_progress (user_name, task_name) values (${user_name}, ${task_name})', params);
+        // }
+
+        await userProgess.record(params);
+
+        return res.json({
+            status: 'success'
+        });
+
+    }
+    catch (error) {
+        return res.json({
+            status: 'error',
+            error
+        });
+    }
+});
+
+
 function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
+    if (req.isAuthenticated() && req.user.active) {
+        return next();
+    }
+    res.redirect('/login')
+}
+
+function ensureAdmin(req, res, next) {
+    if (req.isAuthenticated() && req.user.admin) {
         return next();
     }
     res.redirect('/login')
