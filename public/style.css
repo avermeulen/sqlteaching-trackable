@@ -26,3 +26,14 @@ th {
     background-color: #4CAF50;
     color: ddd;
 }
+
+select {
+    margin: 1em;
+    padding: 2em;
+    font-size: 1em;
+}
+
+input[type='submit'] {
+    padding: 2em;
+    font-size: 1em;
+}

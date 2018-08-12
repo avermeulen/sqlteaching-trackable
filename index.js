@@ -15,11 +15,13 @@ if (process.env.USE_SSL === true) {
 const User = require('./models/user');
 const UserProgress = require('./models/user-progress');
 const UserProgressRoutes = require('./routes/progress-routes');
+const UserRoutes = require('./routes/user-routes');
 
 const db = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/sql_teaching');
 
 const app = express();
 const user = User(db);
+const userRoutes = UserRoutes(user);
 
 
 const userProgress = UserProgress(db);
@@ -43,18 +45,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.get('/account', ensureAuthenticated, function (req, res) {
-    res.render('account', { user: req.user });
-});
-
-app.get('/login', function (req, res) {
-    res.render('login', { user: req.user });
-});
-
-app.get('/logout', function (req, res) {
-    req.logout();
-    res.redirect('/login');
-});
+// app.get('/account', ensureAuthenticated, function (req, res) {
+//     res.render('account', { user: req.user });
+// });
 
 app.get('/', function (req, res) {
     res.redirect('/login');
@@ -65,8 +58,9 @@ app.get('/learn', ensureAuthenticated, function (req, res) {
 });
 
 app.get('/progress', [ensureAuthenticated, ensureAdmin], userProgressRoutes.overview);
-
 app.post('/api/track-progress', userProgressRoutes.trackProgress);
+app.get('/users', [ensureAuthenticated, ensureAdmin], userRoutes.list);
+app.post('/users', [ensureAuthenticated, ensureAdmin], userRoutes.update);
 
 function ensureAuthenticated (req, res, next) {
     if (req.isAuthenticated() && req.user.active) {

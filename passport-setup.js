@@ -40,4 +40,13 @@ module.exports = function (app, user) {
         function (req, res) {
             res.redirect('/learn');
         });
+
+    app.get('/login', function (req, res) {
+        res.render('login', { user: req.user });
+    });
+
+    app.get('/logout', function (req, res) {
+        req.logout();
+        res.redirect('/login');
+    });
 };

@@ -1,0 +1,33 @@
+<h1> Users</h1>
+
+<form action="/users" method="post">
+    <select name="action">
+        <option value="">Select an action</option>
+        {{#each actions}}
+        <option value="{{code}}">{{desc}}</option>
+        {{/each}}
+    </select>
+    <input type="submit">
+
+    <table>
+        <tr>
+            <th></th>
+            <th>Full name</th>
+            <th>Username</th>
+            <th>Admin</th>
+            <th>Active</th>
+        </tr>
+        {{#each users}}
+        <tr>
+            <td>
+                <input type="checkbox" name="selected" value="{{id}}">
+            </td>
+            <td>{{full_name}}</td>
+            <td>{{user_name}}</td>
+            <td>{{active}}</td>
+            <td>{{admin}}</td>
+        </tr>
+        {{/each}}
+    </table>
+
+</form>
