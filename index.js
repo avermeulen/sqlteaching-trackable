@@ -8,8 +8,12 @@ const pgp = require('pg-promise')({
     // Initialization Options
 });
 
-const User = require('./user');
-const UserProgress = require('./user-progress');
+if (process.env.USE_SSL === true) {
+    pgp.pg.defaults.ssl = true;
+}
+
+const User = require('./models/user');
+const UserProgress = require('./models/user-progress');
 
 const db = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/sql_teaching');
 
@@ -25,7 +29,6 @@ passport.deserializeUser(function (obj, done) {
     done(null, obj);
 });
 
-
 app.use(session({
     secret: 'keyboard cat5 run all 0v3r',
     resave: false,
@@ -38,43 +41,26 @@ app.set('view engine', 'handlebars');
 app.use(express.static('public'));
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
 passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: "http://localhost:3010/auth/github/callback"
-},
-    function (accessToken, refreshToken, profile, done) {
-        // asynchronous verification, for effect...
-        process.nextTick(async function () {
-
-            // To keep the example simple, the user's GitHub profile is returned to
-            // represent the logged-in user.  In a typical application, you would want
-            // to associate the GitHub account with a user record in your database,
-            // and return that user instead.
-
-            try {
-                let exist = await user.exist(profile.username);
-
-                if (!exist) {
-                    await user.createUser({
-                        username: profile.username,
-                        fullName: profile.displayName
-                    });
-                }
-                const currentUser = await user.findByUsername(profile.username);
-                return done(null, currentUser);
-            }
-            catch (err) {
-                done(err);
-            }            
-        });
-    }
-));
+    callbackURL: 'http://localhost:3010/auth/github/callback'
+}, function (accessToken, refreshToken, profile, done) {
+    // asynchronous verification, for effect...
+    process.nextTick(async function () {
+        try {
+            const currentUser = await user.findOrCreateUser(profile);
+            return done(null, currentUser);
+        } catch (err) {
+            done(err);
+        }
+    });
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -113,7 +99,7 @@ app.get('/learn', ensureAuthenticated, function (req, res) {
     res.render('learn', { layout: false });
 });
 
-app.get('/progress', [ensureAuthenticated, ensureAdmin], async function(req, res){
+app.get('/progress', [ensureAuthenticated, ensureAdmin], async function (req, res) {
     const progressList = await userProgress.overview();
     res.render('progress', {progressList});
 });
@@ -125,14 +111,13 @@ app.post('/api/track-progress', async function (req, res) {
         });
     }
 
-    const task_name = req.body.task;
-    const user_name = req.user.user_name;
+    const taskName = req.body.task;
+    const userName = req.user.user_name;
 
     try {
-
         const params = {
-            user_name,
-            task_name
+            user_name: userName,
+            task_name: taskName
         };
 
         await userProgress.record(params);
@@ -140,9 +125,7 @@ app.post('/api/track-progress', async function (req, res) {
         return res.json({
             status: 'success'
         });
-
-    }
-    catch (error) {
+    } catch (error) {
         return res.json({
             status: 'error',
             error
@@ -150,23 +133,22 @@ app.post('/api/track-progress', async function (req, res) {
     }
 });
 
-
-function ensureAuthenticated(req, res, next) {
+function ensureAuthenticated (req, res, next) {
     if (req.isAuthenticated() && req.user.active) {
         return next();
     }
-    res.redirect('/login')
+    res.redirect('/login');
 }
 
-function ensureAdmin(req, res, next) {
+function ensureAdmin (req, res, next) {
     if (req.isAuthenticated() && req.user.admin) {
         return next();
     }
-    res.redirect('/login')
+    res.redirect('/login');
 }
 
 const PORT = process.env.PORT || 3010;
 
 app.listen(PORT, function () {
-    console.log("started on: ", this.address().port);
+    console.log('started on: ', this.address().port);
 });
