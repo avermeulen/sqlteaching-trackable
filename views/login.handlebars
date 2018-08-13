@@ -1,3 +1,15 @@
 <h1>sqlteaching Login</h1>
 
+{{#if messages.info}}
+<div class="entry info">
+    <strong> {{messages.info}}</strong>
+</div>
+{{/if}}
+
+{{#if messages.warning}}
+<div class="entry warning">
+    <strong> {{messages.warning}}</strong>
+</div>
+{{/if}}
+
 <a href="/auth/github">Login using GitHub</a>

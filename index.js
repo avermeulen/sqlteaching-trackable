@@ -3,6 +3,7 @@ const exphbs = require('express-handlebars');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const passportSetup = require('./passport-setup');
+const flash = require('express-flash');
 
 const pgp = require('pg-promise')({
     // Initialization Options
@@ -30,6 +31,8 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
+
+app.use(flash());
 
 app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
@@ -64,6 +67,13 @@ function ensureAuthenticated (req, res, next) {
     if (req.isAuthenticated() && req.user.active) {
         return next();
     }
+    if (req.user && req.user.newUser) {
+        req.flash('info', 'Thanks for registering! You account will be activated soon.');
+    } else if (req.user && !req.user.active) {
+        req.flash('warning', 'Account not activated yet!');
+    } else {
+        req.flash('warning', 'Access denied');
+    }
     res.redirect('/login');
 }
 
@@ -71,6 +81,7 @@ function ensureAdmin (req, res, next) {
     if (req.isAuthenticated() && req.user.admin) {
         return next();
     }
+    req.flash('warning', 'Access denied');
     res.redirect('/login');
 }
 

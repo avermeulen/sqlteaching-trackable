@@ -19,7 +19,7 @@ module.exports = function (db) {
     }
 
     async function createUser (details) {
-        const query = 'insert into the_user (user_name, full_name, joined_at, active, admin) values ($/username/, $/fullName/, $/joined_on/, false, false)';
+        const query = 'insert into the_user (user_name, full_name, joined_at, active, admin) values ($/username/, $/fullName/, $/joined_at/, false, false)';
         details.joined_at = new Date();
         await db.none(query, details);
     }
@@ -50,6 +50,7 @@ module.exports = function (db) {
             });
         }
         const currentUser = await findByUsername(profile.username);
+        currentUser.newUser = !userExists;
         return currentUser;
     }
 

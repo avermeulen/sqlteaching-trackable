@@ -37,3 +37,11 @@ input[type='submit'] {
     padding: 2em;
     font-size: 1em;
 }
+
+.info {
+    color: green;
+}
+
+.warning {
+    color: red;
+}
