@@ -1,5 +1,5 @@
 module.exports = function (db) {
-    const userActivationQuery = 'update the_user set active = $1 where id in ($2:csv)';
+    const userActivationQuery = 'update the_user set active = $1, activated_at = $2 where id in ($3:csv)';
     const adminManagementQuery = 'update the_user set admin = $1 where id in ($2:csv)';
 
     async function exist (username) {
@@ -19,16 +19,18 @@ module.exports = function (db) {
     }
 
     async function createUser (details) {
-        const query = 'insert into the_user (user_name, full_name, active, admin) values ($/username/, $/fullName/, false, false)';
+        const query = 'insert into the_user (user_name, full_name, joined_at, active, admin) values ($/username/, $/fullName/, $/joined_on/, false, false)';
+        details.joined_at = new Date();
         await db.none(query, details);
     }
 
     async function activateAll (userIds) {
-        await db.none(userActivationQuery, [true, userIds]);
+
+        await db.none(userActivationQuery, [true, new Date(), userIds]);
     }
 
     async function deactivateAll (userIds) {
-        await db.none(userActivationQuery, [false, userIds]);
+        await db.none(userActivationQuery, [false, new Date(), userIds]);
     }
 
     async function makeAdmin (userIds) {

@@ -22,8 +22,6 @@ const db = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/sql_teac
 const app = express();
 const user = User(db);
 const userRoutes = UserRoutes(user);
-
-
 const userProgress = UserProgress(db);
 const userProgressRoutes = UserProgressRoutes(userProgress);
 
