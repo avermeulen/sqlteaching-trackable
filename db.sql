@@ -4,7 +4,7 @@ create table the_user(
     user_name varchar(40),
     joined_at timestamp,
     active boolean,
-    actived_at timestamp,
+    activated_at timestamp,
     admin boolean
 );
 

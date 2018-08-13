@@ -25,7 +25,6 @@ module.exports = function (db) {
     }
 
     async function activateAll (userIds) {
-
         await db.none(userActivationQuery, [true, new Date(), userIds]);
     }
 
