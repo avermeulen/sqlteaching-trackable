@@ -17,12 +17,13 @@ module.exports = function (app, user) {
         // asynchronous verification, for effect...
         process.nextTick(async function () {
             try {
-
+                console.log('=');
                 const currentUser = await user.findOrCreateUser(profile);
                 console.log(currentUser);
-
+                console.log('==');
                 return done(null, currentUser);
             } catch (err) {
+                console.log('===');
                 console.log(err);
                 done(err);
             }
