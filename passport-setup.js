@@ -17,8 +17,7 @@ module.exports = function (app, user) {
         // asynchronous verification, for effect...
         process.nextTick(async function () {
             try {
-                
-                console.log(profile);
+
                 const currentUser = await user.findOrCreateUser(profile);
                 console.log(currentUser);
 
