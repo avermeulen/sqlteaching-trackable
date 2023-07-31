@@ -15,6 +15,8 @@ module.exports = function (db) {
         const user = await db.one(query, {
             username
         });
+        //
+        console.log(user);
         return user;
     }
 
