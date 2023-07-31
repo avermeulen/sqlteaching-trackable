@@ -3,9 +3,11 @@ module.exports = function (db) {
     const adminManagementQuery = 'update the_user set admin = $1 where id in ($2:csv)';
 
     async function exist (username) {
-        console.log('exist: ' + username);
+        console.log('exist => ' + username);
         try {
             const query = 'select count(*) from the_user where user_name = $/username/';
+            console.log(query);
+            
             const result = await db.one(query, {
                 username
             });
