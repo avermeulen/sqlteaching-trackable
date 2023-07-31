@@ -4,15 +4,16 @@ module.exports = function (db) {
 
     async function exist (username) {
         console.log('exist: ' + username);
-
-        const query = 'select count(*) from the_user where user_name = $/username/';
-        const result = await db.one(query, {
-            username
-        });
-        
-        console.log(result);
-
-        return Number(result.count) === 1;
+        try {
+            const query = 'select count(*) from the_user where user_name = $/username/';
+            const result = await db.one(query, {
+                username
+            });
+            return Number(result.count) === 1;
+        } catch (err) {
+            console.log(err);
+            return false;
+        }
     }
 
     async function findByUsername (username) {
