@@ -6,8 +6,9 @@ module.exports = function (db) {
         console.log('exist => ' + username);
         try {
             const query = 'select count(*) from the_user where user_name = $/username/';
-            console.log(query);
             
+            console.log(db);
+
             const result = await db.one(query, {
                 username
             });
